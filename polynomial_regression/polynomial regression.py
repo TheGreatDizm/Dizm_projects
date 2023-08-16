@@ -1,43 +1,61 @@
+# Our data set illustrates 100 customers in a shop, and their shopping habits.
+
 import numpy as np
 import matplotlib.pyplot as plt
-from keras.datasets import mnist
-from keras.utils import to_categorical
-from keras.models import Sequential
-from keras.layers import Dense, Softmax
+np.random.seed(2)
 
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-imagesize = x_train.shape[1]
-print(x_train.shape, y_train.shape)
+x = np.random.normal(3, 1, 100)
+y = np.random.normal(150, 40, 100) / x
 
-# image_0 = x_train[0]
-# plt.imshow(image_0)
-# plt.show()
+# Result:
+# The x axis represents the number of minutes before making a purchase.
+# The y axis represents the amount of money spent on the purchase.
 
-# hyper parameters
-n_outputs = 10
-n_inputs = imagesize * imagesize   # len(np.unique(y_train)
-hidden_layers = [256, 256]
-activation_function = 'relu'
+# Split Into Train/Test
+# The training set should be a random selection of 80% of the original data.
+# The testing set should be the remaining 20%.
 
-x_train = x_train.reshape((-1, imagesize * imagesize))
-x_test = x_test.reshape((-1, imagesize * imagesize))
+train_x = x[:80]
+train_y = y[:80]
 
-x_train = x_train.astype('float32')/255
-x_test = x_test.astype('float32')/255
+test_x = x[80:]
+test_y = y[80:]
 
-# one_hot encoding on y_train and Y_ test so now the y_train[:5] = 1
+# Display the Training Set
+# Display the same scatter plot with the training set:
 
-y_train = to_categorical(y_train)
-y_test = to_categorical(y_test)
+# Display the Testing Set
+# To make sure the testing set is not completely different, we will take a look at the testing set as well.
 
-print(x_train.shape, y_train.shape)
-print(y_train[:5])
+mymodel = np.poly1d(np.polyfit(train_x, train_y, 4))
 
-model = Sequential()
-model.add(Dense(units = hidden_layers[0], input_dim = n_inputs, name = 'hidden_0'))
-model.add(Activation(activation = activation_function, name = 'relu_0'))
-model.add(Dense(units = hidden_layers[1], name = 'hidden_1'))
-model.add(Activation(activation = activation_function, name = 'relu_1'))
-model.add(Dense(units = n_outputs, name = 'output_layer'))
-model.add(Activation(activation = 'softmax', name = 'softmmax'))
-print(model.summary())
+myline = np.linspace(0, 6, 100)
+
+plt.scatter(train_x, train_y)
+plt.plot(myline, mymodel(myline))
+plt.show()
+
+# The result can back my suggestion of the data set fitting a polynomial regression, even though it would give us some weird results if we try to predict values outside of the data set. Example: the line indicates that a customer spending 6 minutes in the shop would make a purchase worth 200. That is probably a sign of overfitting.
+# But what about the R-squared score? The R-squared score is a good indicator of how well my data set is fitting the model.
+
+from sklearn.metrics import r2_score
+
+r2_1 = r2_score(train_y, mymodel(train_x))
+
+print(r2_1)
+
+# Note: The result 0.799 shows that there is a OK relationship.
+
+# Bring in the Testing Set
+# Now we have made a model that is OK, at least when it comes to training data.
+# Now we want to test the model with the testing data as well, to see if gives us the same result.
+
+r2_2 = r2_score(test_y, mymodel(test_x))
+
+print(r2_2)
+
+# Note: The result 0.809 shows that the model fits the testing set as well, and we are confident that we can use the model to predict future values.
+
+# How much money will a buying customer spend, if she or he stays in the shop for 5 minutes?
+
+print(mymodel(5))
